@@ -1,0 +1,35 @@
+attach(Tractor_Sales)
+t=as.data.frame(Tractor_Sales)
+t
+plot(t[,3])
+plot(t[,3],type="l")
+ts=ts(t[,3],frequency = 12,start = c(2003,1))
+ts
+plot(ts,xlab="year",ylab="sales",main="Tractor Sales")
+library(fpp2)
+ggseasonplot(ts,year.labels = T,year.labels.left = T,ylab="sales")
+ggseasonplot(ts,polar = T)
+ts
+monthplot(ts,ylab="sales",xlab="months")
+td=decompose(ts,type="multiplicative")
+td
+plot(td)
+t1=window(ts,start=c(2003,1),end=c(2012,12),freq=12)
+t2=window(ts,start=c(2013,1),end=c(2014,12),freq=12)
+library(forecast)
+autoplot(t1,col=4,ylab="sales",main = "Blue:Train set and Red:Test set")+autolayer(t2)
+t1s=ses(t1,h=24)
+summary(t1s)
+plot(t1s)
+
+t1h=holt(t1,h=24)
+summary(t1h)
+plot(t1h)
+
+t1w=hw(t1,h=24,seasonal = "multiplicative")
+summary(t1w)
+plot(t1w)
+t1w=data.frame(t1w)
+acw=cbind(t2,t1w[,1])
+ts.plot(acw,col=c("blue","red"))
+accuracy(t2,t1w[,1])
