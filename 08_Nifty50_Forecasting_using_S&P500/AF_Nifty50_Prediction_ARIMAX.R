@@ -7,7 +7,7 @@ library(tseries)
 # Define stock symbol and date range
 stock_symbol <- "^NSEI"  # Replace with any stock symbol
 start_date <- "2025-03-06"
-end_date <- "2026-03-17"
+end_date <- "2026-04-27"
 
 # Get data using quantmod
 stock_data<-getSymbols(stock_symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = F)
@@ -127,7 +127,7 @@ forecast_levels <- last_actual + cumsum(as.numeric(forecast_diff$mean))
 # 6. Plot the Forecast on the Original Scale
 # -------------------------------
 par(mfrow = c(1,1))
-# Create forecast dates – assuming daily forecast (adjust if needed)
+# Create forecast dates â€“ assuming daily forecast (adjust if needed)
 last_date <- as.Date(tail(index(merged_df), 1))
 forecast_dates <- seq(last_date + 1, by = "day", length.out = 30)
 
