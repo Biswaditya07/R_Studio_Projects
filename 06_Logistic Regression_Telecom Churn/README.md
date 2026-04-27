@@ -1,272 +1,181 @@
-# Tractor Sales Forecasting using Exponential Smoothing Methods
+# Telecom Churn Prediction using Logistic Regression
 
-## Project Overview
+## 📌 Project Overview
+This project focuses on predicting **customer churn in the telecom industry** using a **Logistic Regression Model** in **R Programming**. Churn prediction helps telecom companies identify customers who are likely to leave the service, allowing businesses to take proactive retention measures.
 
-This project focuses on **Time Series Forecasting** of tractor sales using **Exponential Smoothing Techniques** in **R**.
+The model is built using customer behavior and service-related variables such as tenure, number of complaints, prepaid/postpaid status, long call usage, and short call usage. The project includes data splitting, model training, probability prediction, confusion matrix evaluation, ROC curve analysis, and prediction for new customers.
 
-Three forecasting methods were applied:
+## 👨‍💼 Author
+**Biswaditya07 (Biswaditya Saha)**  
+MBA in Business Analytics
 
-- **Single Exponential Smoothing (SES)**
-- **Double Exponential Smoothing (Holt’s Method)**
-- **Triple Exponential Smoothing (Holt-Winters Method)**
+## 🛠️ Tools & Technologies Used
+- R Programming  
+- CSV Dataset  
+- Logistic Regression  
+- Libraries Used:
+  - `caTools`
+  - `lessR`
+  - `ROCR`
 
-The goal is to analyze historical tractor sales data, identify trend and seasonality, and forecast future sales accurately.
+## 📂 Files Included
+| File Name | Description |
+|-----------|-------------|
+| `logistic_regression_Full(1).R` | R script for Telecom Churn Prediction using Logistic Regression |
+| `telecom_churn(1).csv` | Dataset containing telecom customer churn records |
 
----
+## 📊 Business Problem
+Customer churn is one of the biggest challenges in telecom businesses. Acquiring new customers costs more than retaining existing ones. This project helps identify customers who are likely to churn so companies can improve customer satisfaction and reduce revenue loss.
 
-## Dataset Information
+## 📈 Dataset Features
+The model uses the following variables:
 
-The dataset contains monthly tractor sales data.
+- `tenure` → Duration of customer relationship  
+- `no_of_complaints` → Number of complaints raised  
+- `Prepaid` → Prepaid customer indicator  
+- `Long` → Long duration call usage  
+- `Short` → Short duration call usage  
+- `churn` → Target variable (Yes/No)
 
-| Feature | Description |
-|--------|-------------|
-| Month / Time Period | Monthly observations |
-| Sales | Tractor units sold |
+## 📊 Project Workflow
 
-The time series starts from:
-
-- **January 2003**
-
-With monthly frequency:
-
-- **12 observations per year**
-
----
-
-## Project Objectives
-
-- Analyze historical tractor sales trends
-- Detect seasonality patterns
-- Build forecasting models
-- Compare smoothing techniques
-- Predict future tractor sales
-
----
-
-## Libraries Used
+### 1️⃣ Data Inspection
+Dataset structure is checked before modeling.
 
 ```r
-forecast
-fpp2
+str(telecom_churn)
 ````
 
----
+### 2️⃣ Train-Test Split
 
-## Project Workflow
+Dataset is divided into training and validation sets.
 
-### 1. Data Loading & Visualization
+```r id="4vlb7r"
+library(caTools)
 
-Imported tractor sales dataset and created line plots to understand movement over time.
+set.seed(1234)
+split <- sample.split(telecom_churn$churn, 0.8)
 
-Used:
-
-```r
-plot()
-ts()
+train <- subset(telecom_churn, split == TRUE)
+vali  <- subset(telecom_churn, split == FALSE)
 ```
 
-Generated:
+* 80% Training Data
+* 20% Validation Data
 
-* Basic line chart
-* Monthly sales trend chart
+### 3️⃣ Logistic Regression Model Building
 
----
+```r id="jv6p9x"
+library(lessR)
 
-### 2. Time Series Conversion
-
-Converted sales data into time series format:
-
-```r
-ts(data, frequency = 12, start = c(2003,1))
+model <- Logit(churn ~ tenure + no_of_complaints + Prepaid + Long + Short, data = train)
 ```
 
-This enables monthly forecasting analysis.
+The model predicts probability of churn using selected independent variables.
 
----
+### 4️⃣ Validation Prediction
 
-### 3. Seasonal Analysis
-
-Used:
-
-```r
-ggseasonplot()
-monthplot()
+```r id="yy2vc0"
+res <- predict(model, vali, type = "response")
 ```
 
-To identify:
+Returns churn probabilities between 0 and 1.
 
-* Repeating seasonal patterns
-* Strong and weak months
-* Year-over-year sales movement
+### 5️⃣ Confusion Matrix & Accuracy
 
----
+```r id="yrudve"
+confmatrix <- table(
+Actual_value = vali$churn,
+Predicted_value = res > 0.5
+)
 
-### 4. Time Series Decomposition
-
-Used Multiplicative Decomposition:
-
-```r
-decompose(type = "multiplicative")
+(confmatrix[1,1] + confmatrix[2,2]) / sum(confmatrix)
 ```
 
-Separated sales into:
+Used to evaluate model performance.
 
-* Trend
-* Seasonality
-* Irregular components
+### 6️⃣ Training Predictions
 
----
-
-### 5. Train-Test Split
-
-Data divided into:
-
-| Dataset      | Period      |
-| ------------ | ----------- |
-| Training Set | 2003 - 2012 |
-| Testing Set  | 2013 - 2014 |
-
-Used to validate forecast accuracy.
-
----
-
-## Forecasting Models Applied
-
-### 1. Single Exponential Smoothing (SES)
-
-Best for:
-
-* No trend
-* No seasonality
-
-Used:
-
-```r
-ses()
+```r id="k6a0b5"
+res_train <- predict(model, train, type = "response")
 ```
 
----
+Used for ROC analysis.
 
-### 2. Double Exponential Smoothing (Holt’s Method)
+### 7️⃣ ROC Curve Analysis
 
-Best for:
+```r id="c9ceax"
+library(ROCR)
 
-* Trend present
-* No seasonality
+ROCRPred = prediction(res_train, train$churn)
+ROCRPref = performance(ROCRPred, "tpr", "fpr")
 
-Used:
-
-```r
-holt()
+plot(ROCRPref, colorize = TRUE, print.cutoffs.at = seq(0.1, by = 0.1))
 ```
 
----
+ROC curve evaluates classification power across thresholds.
 
-### 3. Triple Exponential Smoothing (Holt-Winters)
+### 8️⃣ Predict Churn for New Customers
 
-Best for:
+```r id="z7p4ho"
+pred <- read.csv("pred.csv")
 
-* Trend present
-* Seasonality present
-
-Used:
-
-```r
-hw(seasonal = "multiplicative")
+res_new <- predict(model, pred, type = "response")
 ```
 
-This is most suitable for tractor sales data.
+### 9️⃣ Export Final Predictions
 
----
+```r id="m4ndnq"
+pred$churn <- ifelse(res_new > 0.5, "churn", "not churn")
 
-## Model Evaluation
-
-Forecasted values were compared against actual test data using:
-
-```r
-accuracy()
+write.csv(pred, "predict_churn_output.csv", row.names = FALSE)
 ```
 
-Common metrics:
+Outputs final churn classification file.
 
-* RMSE
-* MAE
-* MAPE
-* Forecast Error
+## 📊 Model Output Metrics
 
----
+* Accuracy
+* Confusion Matrix
+* Probability Scores
+* ROC Curve
+* Threshold-based Classification
 
-## Visualization Outputs
+## 📈 Business Applications
 
-Generated:
+* Customer Retention Strategy
+* Churn Prevention Campaigns
+* Personalized Offers
+* Complaint Resolution Prioritization
+* Revenue Protection
+* Customer Lifetime Value Optimization
 
-* Historical Sales Trend
-* Seasonal Plot
-* Polar Seasonal Plot
-* Monthly Plot
-* Decomposition Plot
-* Forecast Plots
-* Actual vs Predicted Comparison
+## 🔍 Key Learnings
 
----
+* Binary Classification using Logistic Regression
+* Data Splitting in R
+* Model Probability Prediction
+* Confusion Matrix Evaluation
+* ROC Curve Interpretation
+* Predictive Analytics for Telecom Industry
 
-## Key Insights
+## 💻 Sample Code
 
-* Tractor sales show clear seasonal behavior.
-* Trend exists over years.
-* Triple Exponential Smoothing performs best when seasonality is strong.
-* Forecasting helps inventory and production planning.
+```r id="7ccrwl"
+library(caTools)
+library(lessR)
 
----
+split <- sample.split(telecom_churn$churn, 0.8)
 
-## Business Use Cases
+model <- Logit(churn ~ tenure + no_of_complaints + Prepaid + Long + Short, data = train)
 
-Useful for:
-
-* Tractor manufacturers
-* Agricultural equipment distributors
-* Supply chain planning
-* Demand forecasting
-* Production scheduling
-* Revenue planning
-
----
-
-## Project Files
-
-| File Name         | Description                    |
-| ----------------- | ------------------------------ |
-| Tractor Data.R    | Complete forecasting code in R |
-| Tractor-Sales.csv | Monthly tractor sales dataset  |
-
----
-
-## How to Run
-
-1. Open R / RStudio
-2. Install required libraries
-3. Load CSV file
-4. Run `Tractor Data.R`
-5. Review plots, forecasts, and accuracy metrics
-
----
-
-## Key Learnings
-
-* Time Series Analysis in R
-* Forecasting using SES, Holt, Holt-Winters
-* Trend & Seasonality Detection
-* Model Accuracy Comparison
-* Business Demand Forecasting
-
-
-## Conclusion
-
-This project demonstrates practical forecasting of tractor sales using Exponential Smoothing methods. Among all methods, **Triple Exponential Smoothing (Holt-Winters)** is generally the most effective when both trend and seasonality exist.
-
----
-
-## Author
-Biswaditya07 (Biswaditya Saha)
+predict(model, vali, type = "response")
 ```
 
+## 🚀 Conclusion
+
+This project provides practical exposure to **customer churn prediction using Logistic Regression**. It demonstrates how telecom companies can use historical customer data to identify churn risk and take proactive actions to improve retention and profitability.
+
+## ⭐ Support
+
+If you like this project, give it a **star ⭐** on GitHub and connect for more analytics projects.
